@@ -6,3 +6,5 @@ sabiduria72/videos/
 sabiduria72/remotion/node_modules/
 sabiduria72/remotion/public/
 sabiduria72/remotion/out/
+__pycache__/
+*.pyc
