@@ -3,7 +3,7 @@ import {AbsoluteFill, Audio, continueRender, delayRender, staticFile, useCurrent
 
 // El motor de SABIDURÍA 72 (dev.html) dibuja un fotograma determinista con renderFrame(t).
 // Remotion fija el tiempo, pide el fotograma al motor y lo captura: sin relojes ni rAF.
-export const Frame: React.FC = () => {
+export const Frame: React.FC<{src?: string}> = ({src = 'dev.html'}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const ref = useRef<HTMLIFrameElement>(null);
@@ -36,7 +36,7 @@ export const Frame: React.FC = () => {
     <AbsoluteFill style={{backgroundColor: '#000'}}>
       <iframe
         ref={ref}
-        src={staticFile('dev.html') + '?cap=1&t=0'}
+        src={staticFile(src) + '?cap=1&t=0'}
         style={{width: 1080, height: 1920, border: 0, display: 'block'}}
       />
       <Audio src={staticFile('mix.wav')} />
