@@ -1,3 +1,4 @@
+BLOOM=.95;GRAIN=.05;
 /* ===== ESTILO NEÓN (variante del motor) — se añade AL FINAL de video.js =====
    Todo lo que se rellena pasa a ser un interior oscuro y translúcido con contorno que brilla,
    el mapa es una rejilla neón y el fondo es negro con rejilla tenue. Bloom alto. */

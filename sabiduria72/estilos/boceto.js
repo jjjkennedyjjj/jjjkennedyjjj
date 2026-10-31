@@ -1,5 +1,5 @@
 /* ===== ESTILO BOCETO A MANO — se añade AL FINAL de video.js =====
-   Papel de cuaderno cuadriculado, trazo de tinta que tiembla (filtro de desplazamiento que «hierve» cada 3 fotogramas),
+   Papel de cuaderno cuadriculado, trazo de tinta firme (sin temblor: el filtro de desplazamiento se retiró porque marea),
    colores de rotulador con rayado en lugar de relleno liso. Sin brillos. */
 BLOOM=0;GRAIN=.05;VIG=.22;
 const INK='#1b2340';
@@ -34,10 +34,8 @@ function _paper(){return asset('paper',()=>bake(W,H,g=>{g.fillStyle='#f3ebd6';g.
  g.strokeStyle='rgba(230,80,80,.45)';g.lineWidth=3;g.beginPath();g.moveTo(54,0);g.lineTo(54,H);g.stroke();
  g.fillStyle='rgba(60,60,80,.35)';for(let i=0;i<5;i++){g.beginPath();g.arc(26,260+i*420,12,0,7);g.fill()}}))}
 BGF=ta=>ctx.clearRect(0,0,W,H);
-document.body.insertAdjacentHTML('beforeend','<svg width="0" height="0" style="position:absolute"><filter id="wob" x="0" y="0" width="100%" height="100%"><feTurbulence id="wobT" type="fractalNoise" baseFrequency=".014" numOctaves="2" seed="1"/><feDisplacementMap in="SourceGraphic" scale="10"/></filter></svg>');
 function post(fi){const g=X;g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.globalAlpha=1;g.filter='none';g.drawImage(_paper(),0,0);
- const wt=document.getElementById('wobT');if(wt)wt.setAttribute('seed',String(1+Math.floor(fi/3)%6));
- g.filter='url(#wob)';g.drawImage(fb,0,0);g.filter='none';
+ g.drawImage(fb,0,0);
  if(VIG>0){g.globalAlpha=VIG;g.drawImage(vigTex(),0,0);g.globalAlpha=1}
  if(GRAIN>0){g.save();g.globalAlpha=GRAIN;g.globalCompositeOperation='multiply';const ox=Math.floor(rnd(fi*1.3)*256),oy=Math.floor(rnd(fi*2.7)*256);g.translate(-ox,-oy);g.fillStyle=g.createPattern(grainTex(),'repeat');g.fillRect(ox,oy,W,H);g.restore()}}
 function drawGancho(ta,tv){if(!GANCHO)return;const tEnd=SUBS[GANCHO.n-1][1];const fo=GANCHO.fin==null?tEnd+.35:GANCHO.fin;const a=1-ease(prog(ta,fo,fo+.5));if(a<=0)return;

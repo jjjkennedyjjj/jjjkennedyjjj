@@ -38,6 +38,9 @@ def main() -> None:
     tpl = (KIT / "motor" / "plantilla_motor.html").read_text(encoding="utf-8")
     video = (folder / "video.js").read_text(encoding="utf-8")
     sfx = (folder / "sfx.js").read_text(encoding="utf-8") if (folder / "sfx.js").exists() else ""
+    estilo = cfg.get("estilo", "ilustrado")  # ilustrado | neon | plano | boceto | comic (ver estilos/)
+    if estilo != "ilustrado":
+        video += "\n" + (KIT / "estilos" / f"{estilo}.js").read_text(encoding="utf-8")
     if (folder / "subs.js").exists() and "const SUBS" not in video:  # subtítulos alineados por medir_tiempos.py
         video = (folder / "subs.js").read_text(encoding="utf-8") + video
 
