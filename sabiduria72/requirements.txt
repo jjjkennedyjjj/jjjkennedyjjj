@@ -1,0 +1,4 @@
+numpy
+fonttools
+brotli
+sherpa-onnx

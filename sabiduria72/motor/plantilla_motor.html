@@ -292,6 +292,15 @@ function capOff(){document.body.classList.remove('cap');showUI()}
 bCap.onclick=()=>{capOn()};
 let hold=null;box.addEventListener('pointerdown',()=>{if(document.body.classList.contains('cap')){hold=setTimeout(()=>{capOff()},900)}});['pointerup','pointerleave','pointercancel'].forEach(ev=>box.addEventListener(ev,()=>{clearTimeout(hold)}));
 addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();want?pause():play()}else if(e.code==='ArrowRight')seek(tv+5);else if(e.code==='ArrowLeft')seek(tv-5);else if(e.key==='c'||e.key==='C')document.body.classList.contains('cap')?capOff():capOn();else if(e.key==='Escape')capOff()});
+/* ---- exportación: los efectos de sonido a un WAV (OfflineAudioContext) para el MP4 ---- */
+window.__sfxOffline=async function(dur){const sr=44100,oc=new OfflineAudioContext(1,Math.ceil(dur*sr),sr);let off=0;
+ const proxy=new Proxy(oc,{get(t,p){if(p==='currentTime')return off;const v=t[p];return typeof v==='function'?v.bind(t):v}});
+ const oAC=AC,oMG=MG,oOn=SFXON;AC=proxy;MG=oc.createGain();MG.gain.value=.5;MG.connect(oc.destination);SFXON=true;
+ try{if(typeof GANCHO!=='undefined'&&GANCHO){off=.4;sfx('HIT')}(typeof CUES!=='undefined'?CUES:[]).forEach(([ct,k])=>{off=ct+OFF;sfx(k)})}finally{AC=oAC;MG=oMG;SFXON=oOn}
+ const buf=await oc.startRendering(),d=buf.getChannelData(0),n=d.length,u8=new Uint8Array(44+n*2),v=new DataView(u8.buffer);
+ const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};ws(0,'RIFF');v.setUint32(4,36+n*2,true);ws(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);ws(36,'data');v.setUint32(40,n*2,true);
+ for(let i=0;i<n;i++)v.setInt16(44+i*2,Math.max(-1,Math.min(1,d[i]))*32767,true);
+ let bin='';for(let i=0;i<u8.length;i+=8192)bin+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));return btoa(bin)};
 window.__qa={seek,draw,DUR,OFF};
 const ready=Promise.all(['700','800','900'].map(w=>document.fonts?document.fonts.load(w+' 40px Montserrat','SABIDURÍA ¿?0123456789'):0)).catch(()=>{}).then(()=>document.fonts?document.fonts.ready:0);
 ready.then(()=>{if(q.has('t')){tv=parseFloat(q.get('t'))||0;start.style.display='none';if(q.get('cap')==='1')document.body.classList.add('cap');draw();document.title='listo';window.__listo=true}
