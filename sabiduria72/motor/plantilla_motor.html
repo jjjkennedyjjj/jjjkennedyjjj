@@ -7,7 +7,8 @@
 <style>
 /*__FONT_FACES__*/
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:#03050b;overflow:hidden;font-family:Montserrat,system-ui,sans-serif;user-select:none;-webkit-user-select:none}
+html{color-scheme:dark}
+html,body{margin:0;height:100%;background:#03050b;color:#eef4ff;overflow:hidden;font-family:Montserrat,system-ui,sans-serif;user-select:none;-webkit-user-select:none}
 #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
 #box{position:relative;width:360px;height:640px;background:#05070f;overflow:hidden}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -276,7 +277,7 @@ function seek(t){tv=clamp(t,0,DUR);endT0=null;lastTa=tv-OFF;if(audio){try{audio.
 function play(){acx();if(AC&&AC.state==='suspended')AC.resume();if(tv>=DUR-.05)seek(0);start.classList.add('go');start.style.display='none';want=true;live=!audio;endT0=null;
  if(audio){audio.currentTime=Math.max(0,tv-OFF);const p=audio.play();if(p&&p.catch)p.catch(()=>{want=false;draw()})}else{t0c=performance.now();base0=tv;live=true}idle=performance.now()}
 function pause(){want=false;live=false;if(audio)audio.pause();draw()}
-if(audio){audio.addEventListener('playing',()=>{if(want){live=true}});audio.addEventListener('ended',()=>{endT0=performance.now();endBase=audio.duration+OFF})}
+if(audio){audio.addEventListener('error',()=>{if(!audio._fb){audio._fb=1;audio.src='data:audio/mpeg;base64,'+AUDIO_B64;audio.load()}});audio.addEventListener('playing',()=>{if(want){live=true}});audio.addEventListener('ended',()=>{endT0=performance.now();endBase=audio.duration+OFF})}
 function loop(now){if(want&&live){let t;if(audio&&endT0==null)t=audio.currentTime+OFF;else if(audio)t=endBase+(now-endT0)/1000;else t=base0+(now-t0c)/1000;
   const ta=t-OFF;if(t>=tv&&t-tv<.5){if(typeof GANCHO!=='undefined'&&GANCHO&&tv<.4&&t>=.4)sfx('HIT');(typeof CUES!=='undefined'?CUES:[]).forEach(([ct,k])=>{if(ct>lastTa&&ct<=ta)sfx(k)})}
   lastTa=ta;tv=Math.min(t,DUR);draw();if(tv>=DUR){want=false;live=false;if(audio)audio.pause();draw()}}
