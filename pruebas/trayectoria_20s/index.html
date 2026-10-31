@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La trayectoria · prueba 20 s</title>
+<style>
+  html, body { margin: 0; background: #0b1020; }
+  canvas { display: block; width: 1080px; height: 1920px; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1080" height="1920"></canvas>
+<script>
+// Prueba de animación: trayectoria de un proyectil. 20 s, 30 fps, 9:16.
+// Física: v0 = 30 m/s, ángulo 50°, g = 9,8 m/s². Animación con cámara fija.
+const W = 1080, H = 1920, FPS = 30, DUR = 20;
+const V0 = 30, ANG = 50 * Math.PI / 180, G = 9.8;
+const VX = V0 * Math.cos(ANG), VY0 = V0 * Math.sin(ANG);
+const T_FLY = 2 * VY0 / G;             // tiempo de vuelo real ≈ 4,7 s
+const RANGE = VX * T_FLY;              // alcance ≈ 90 m
+const H_MAX = VY0 * VY0 / (2 * G);     // altura máxima ≈ 27 m
+
+const COL = { bg: '#0b1020', cyan: '#5fe3ff', amber: '#ffc857', magenta: '#ff5fa2',
+              green: '#4dffa6', violet: '#a78bfa', white: '#eef4ff', dim: '#6b7a99' };
+
+// Mundo: x en metros (0..100), y en metros (0..30). Escala y origen en píxeles.
+const X0 = 90, GROUND = 1380, S = 9.6;
+const px = x => X0 + x * S;
+const py = y => GROUND - y * S;
+
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+
+// Trayectoria en el tiempo real de vuelo, mostrada a cámara lenta.
+const FLY_START = 6, FLY_END = 14;     // segundos de vídeo
+function simT(t) {                     // tiempo de vuelo simulado para el vídeo t
+  const k = Math.min(Math.max((t - FLY_START) / (FLY_END - FLY_START), 0), 1);
+  return k * T_FLY;
+}
+function pos(tf) { return { x: VX * tf, y: VY0 * tf - 0.5 * G * tf * tf }; }
+
+function ease(x) { x = Math.min(Math.max(x, 0), 1); return x * x * (3 - 2 * x); }
+function fade(t, a, b) { return ease((t - a) / 0.6) * (1 - ease((t - b) / 0.6)); }
+
+function text(str, x, y, size, color, weight = 800, align = 'center', alpha = 1) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px system-ui, "Helvetica Neue", Arial, sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(str, x, y);
+  ctx.restore();
+}
+
+function arrow(x1, y1, x2, y2, color, width = 8, alpha = 1) {
+  const ang = Math.atan2(y2 - y1, x2 - x1), head = 26;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - Math.cos(ang) * head * 0.6, y2 - Math.sin(ang) * head * 0.6); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - head * Math.cos(ang - 0.45), y2 - head * Math.sin(ang - 0.45));
+  ctx.lineTo(x2 - head * Math.cos(ang + 0.45), y2 - head * Math.sin(ang + 0.45));
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function background(t) {
+  const g = ctx.createRadialGradient(W / 2, 700, 100, W / 2, 900, 1400);
+  g.addColorStop(0, '#16224a'); g.addColorStop(1, COL.bg);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // estrellas fijas (deterministas)
+  for (let i = 0; i < 90; i++) {
+    const x = (i * 947) % W, y = (i * 613) % 1000;
+    ctx.globalAlpha = 0.25 + ((i * 37) % 10) / 20;
+    ctx.fillStyle = COL.white;
+    ctx.fillRect(x, y, 2, 2);
+  }
+  ctx.globalAlpha = 1;
+  // suelo
+  ctx.fillStyle = '#1b2a4a';
+  ctx.fillRect(0, GROUND, W, H - GROUND);
+  ctx.fillStyle = COL.dim;
+  ctx.fillRect(0, GROUND, W, 3);
+}
+
+function title(t) {
+  const a = fade(t, 0, 3.4);
+  if (a <= 0) return;
+  text('La trayectoria', W / 2, 560, 92, COL.cyan, 900, 'center', a);
+  text('Un lanzamiento con gravedad', W / 2, 670, 46, COL.white, 700, 'center', a * 0.9);
+}
+
+function launcher(t) {
+  const a = fade(t, 3, 14.5);
+  if (a <= 0) return;
+  // cañón
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.translate(px(0), py(0));
+  ctx.rotate(-ANG);
+  ctx.fillStyle = COL.dim;
+  ctx.fillRect(0, -18, 110, 36);
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = COL.dim;
+  ctx.beginPath(); ctx.arc(px(0), py(0), 36, Math.PI, 0); ctx.fill(); ctx.restore();
+}
+
+function velocityAt(t) {
+  // vector velocidad en el punto actual, con sus componentes
+  const tf = simT(t);
+  const vy = VY0 - G * tf;
+  return { vx: VX, vy };
+}
+
+function trail(t) {
+  const tf = simT(t);
+  if (tf <= 0) return;
+  ctx.save();
+  ctx.strokeStyle = COL.cyan; ctx.lineWidth = 6; ctx.lineCap = 'round';
+  ctx.shadowColor = COL.cyan; ctx.shadowBlur = 18;
+  ctx.beginPath();
+  const N = 120;
+  for (let i = 0; i <= N; i++) {
+    const s = tf * i / N;
+    const p = pos(s);
+    if (i === 0) ctx.moveTo(px(p.x), py(p.y)); else ctx.lineTo(px(p.x), py(p.y));
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function projectile(t) {
+  const tf = simT(t);
+  const a = fade(t, 5.6, 14.6);
+  if (a <= 0) return;
+  const p = pos(tf);
+  ctx.save(); ctx.globalAlpha = a;
+  ctx.fillStyle = COL.amber;
+  ctx.shadowColor = COL.amber; ctx.shadowBlur = 30;
+  ctx.beginPath(); ctx.arc(px(p.x), py(p.y), 22, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  // vectores de velocidad: vx (verde, constante) y vy (magenta, cambia)
+  const v = velocityAt(t);
+  const sc = 4.2;
+  const ox = px(p.x), oy = py(p.y);
+  arrow(ox, oy, ox + v.vx * sc, oy, COL.green, 9, a);
+  arrow(ox, oy, ox, oy - v.vy * sc, COL.magenta, 9, a);
+  text(`vₓ = ${v.vx.toFixed(1).replace('.', ',')} m/s`, ox + v.vx * sc + 20, oy - 10, 36, COL.green, 800, 'left', a);
+  const vyTxt = `v_y = ${v.vy.toFixed(1).replace('.', ',')} m/s`;
+  text(vyTxt, ox + 22, oy - v.vy * sc - (v.vy >= 0 ? 36 : -36), 36, COL.magenta, 800, 'left', a);
+}
+
+function axesAndLabels(t) {
+  const a = fade(t, 6, 17);
+  if (a <= 0) return;
+  // altura máxima y alcance (se marcan al llegar)
+  const apex = pos(VY0 / G);
+  const hA = fade(t, 9.8, 17);
+  if (hA > 0) {
+    ctx.save(); ctx.globalAlpha = hA;
+    ctx.setLineDash([12, 12]); ctx.strokeStyle = COL.amber; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(px(apex.x), py(apex.y)); ctx.lineTo(px(apex.x), py(0)); ctx.stroke();
+    ctx.restore();
+    text(`altura máx. ≈ ${Math.round(H_MAX)} m`, px(apex.x) + 26, py(apex.y) - 6, 40, COL.amber, 800, 'left', hA);
+  }
+  const rA = fade(t, 12.6, 17);
+  if (rA > 0) {
+    ctx.save(); ctx.globalAlpha = rA;
+    ctx.strokeStyle = COL.violet; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.moveTo(px(0), py(0) + 40); ctx.lineTo(px(RANGE), py(0) + 40); ctx.stroke();
+    ctx.restore();
+    text(`alcance ≈ ${Math.round(RANGE)} m`, px(RANGE / 2), py(0) + 96, 44, COL.violet, 800, 'center', rA);
+  }
+}
+
+function subtitle(t, a, b, lines, color = COL.white) {
+  const al = fade(t, a, b);
+  if (al <= 0) return;
+  // caja inferior, dentro de la zona de subtítulos
+  ctx.save(); ctx.globalAlpha = al * 0.55; ctx.fillStyle = '#000';
+  ctx.beginPath(); ctx.roundRect(90, 1560, W - 180, 230, 28); ctx.fill(); ctx.restore();
+  lines.forEach((ln, i) => text(ln, W / 2, 1625 + i * 70, 44, color, 700, 'center', al));
+}
+
+function captions(t) {
+  subtitle(t, 6, 10.2, ['Sin fuerzas externas, la pelota', 'seguiría en línea recta.']);
+  subtitle(t, 10.4, 14, ['La gravedad solo cambia', 'la velocidad vertical.']);
+  subtitle(t, 14.4, 18.6, ['Horizontal: constante.', 'Vertical: sube, se frena y cae.'], COL.cyan);
+}
+
+function finale(t) {
+  const a = fade(t, 17.6, 99);
+  if (a <= 0) return;
+  text('Fórmula clave', W / 2, 760, 56, COL.amber, 800, 'center', a);
+  text('y(t) = v₀·sen θ · t − ½ g t²', W / 2, 860, 52, COL.white, 800, 'center', a);
+  text('x(t) = v₀·cos θ · t', W / 2, 940, 52, COL.white, 800, 'center', a);
+  text('Recordatorio: g = 9,8 m/s²', W / 2, 1040, 40, COL.dim, 700, 'center', a);
+}
+
+// Punto de entrada determinista: solo depende de t (segundos de vídeo).
+function render(t) {
+  ctx.clearRect(0, 0, W, H);
+  background(t);
+  title(t);
+  launcher(t);
+  trail(t);
+  projectile(t);
+  axesAndLabels(t);
+  captions(t);
+  finale(t);
+}
+
+window.render = render;
+window.DUR = DUR; window.FPS = FPS;
+render(0);
+</script>
+</body>
+</html>
