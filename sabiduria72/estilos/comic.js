@@ -30,7 +30,7 @@ BGF=ta=>ctx.drawImage(_bgC(),0,0);
 function post(fi){const g=X;g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.globalAlpha=1;g.drawImage(fb,0,0);
  g.strokeStyle=INK;g.lineWidth=28;g.strokeRect(14,14,W-28,H-28);g.strokeStyle='#ffffff';g.lineWidth=6;g.strokeRect(34,34,W-68,H-68)}
 function drawSubs(ta){if(typeof SUBS==='undefined')return;const skip=GANCHO?GANCHO.n:0;
- for(let k=skip;k<SUBS.length;k++){const s=SUBS[k];const ini=s[0],fin=s[1];if(ta<ini-.12||ta>fin+.2)continue;const a=ease(prog(ta,ini-.12,ini+.06))*(1-ease(prog(ta,fin+.01,fin+.2)));if(a<=0)continue;
+ for(let k=skip;k<SUBS.length;k++){const s=SUBS[k];const ini=s[0],fin=s[1];if(ta<ini-.12||ta>fin+.2)continue;{const nx=SUBS[k+1];if(nx&&nx[0]-fin<.4&&ta>=nx[0]-.1)continue}const a=ease(prog(ta,ini-.12,ini+.06))*(1-ease(prog(ta,fin+.01,fin+.2)));if(a<=0)continue;
   const g=ctx;g.save();g.__ns=1;const size=40,maxW=720;g.font=`800 ${size}px Montserrat,system-ui,sans-serif`;const sp=g.measureText(' ').width;
   const raw=s[2].split(' ');const words=raw.map((w,i)=>{const key=/^\*.*\*[.,;:!?…]*$/.test(w);const clean=w.replace(/\*/g,'').replace(/~/g,' ');return{s:clean,key,w:g.measureText(clean).width,t:s[3][i]}});
   const lines=[];let cur=[],cw=0;words.forEach(w=>{if(cur.length&&cw+sp+w.w>maxW){lines.push(cur);cur=[];cw=0}cur.push(w);cw+=(cur.length>1?sp:0)+w.w});if(cur.length)lines.push(cur);

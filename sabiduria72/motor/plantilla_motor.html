@@ -45,7 +45,7 @@ const EMO_SRC="data:image/png;base64,__EMO_B64__";
 const OFF=__OFF__, DUR=__DUR__;
 const W=1080,H=1920;
 const C={bg:'#0a1024',bg2:'#121c40',cyan:'#5fe3ff',amber:'#ffc857',magenta:'#ff5fa2',green:'#4dffa6',red:'#ff4d6d',violet:'#a78bfa',white:'#eef4ff',dim:'#8d9bc0',ink:'#06101f',blue:'#4aa8ff'};
-let BLOOM=.55,GRAIN=.08,VIG=1;
+let BLOOM=.55,GRAIN=.08,VIG=1,CLOSE_BG='#070b1d';
 const CAM_FIJA=true;
 const XT=480; // centro de textos y subtítulos (margen derecho de 120 px)
 
@@ -201,7 +201,7 @@ function drawTitles(ta){if(typeof TITLES==='undefined')return;TITLES.forEach(([i
 /* ---------- subtítulos palabra a palabra ---------- */
 let _sw=null;
 function drawSubs(ta){if(typeof SUBS==='undefined')return;const skip=GANCHO?GANCHO.n:0;
- for(let k=skip;k<SUBS.length;k++){const s=SUBS[k];const ini=s[0],fin=s[1];if(ta<ini-.12||ta>fin+.2)continue;const a=ease(prog(ta,ini-.12,ini+.06))*(1-ease(prog(ta,fin+.01,fin+.2)));if(a<=0)continue;
+ for(let k=skip;k<SUBS.length;k++){const s=SUBS[k];const ini=s[0],fin=s[1];if(ta<ini-.12||ta>fin+.2)continue;{const nx=SUBS[k+1];if(nx&&nx[0]-fin<.4&&ta>=nx[0]-.1)continue}const a=ease(prog(ta,ini-.12,ini+.06))*(1-ease(prog(ta,fin+.01,fin+.2)));if(a<=0)continue;
   const g=ctx;g.save();const size=40,maxW=720;g.font=`800 ${size}px Montserrat,system-ui,sans-serif`;const sp=g.measureText(' ').width;
   const raw=s[2].split(' ');const words=raw.map((w,i)=>{const key=/^\*.*\*[.,;:!?…]*$/.test(w)||/^\*/.test(w)&&/\*[.,;:!?…]*$/.test(w);const clean=w.replace(/\*/g,'').replace(/~/g,' ');return{s:clean,key,w:g.measureText(clean).width,t:s[3][i]}});
   const lines=[];let cur=[],cw=0;words.forEach(w=>{if(cur.length&&cw+sp+w.w>maxW){lines.push(cur);cur=[];cw=0}cur.push(w);cw+=(cur.length>1?sp:0)+w.w});if(cur.length)lines.push(cur);
@@ -225,7 +225,7 @@ function drawTrans(ta){if(typeof TRANS==='undefined')return;for(const tr of TRAN
 /* ---------- cierre común: ondas → lemniscatas → letras → emoji → línea ---------- */
 function lemn(a,th){const s=Math.sin(th),c=Math.cos(th),d=1+s*s;return[a*c/d,a*s*c/d]}
 function drawClosing(ta){if(typeof LOGO_T0==='undefined')return;const t0=LOGO_T0,ts=t0-1.9;if(ta<ts)return;const g=ctx;const cx=515,cy=960;
- const cover=ease(prog(ta,ts,ts+.7));g.save();g.globalAlpha=cover;g.fillStyle='#070b1d';g.fillRect(0,0,W,H);g.restore();
+ const cover=ease(prog(ta,ts,ts+.7));g.save();g.globalAlpha=cover;g.fillStyle=CLOSE_BG;g.fillRect(0,0,W,H);g.restore();
  g.save();
  for(let i=0;i<5;i++){const p=prog(ta,ts+.1*i,ts+1.7+.1*i);if(p>0&&p<1){ring(cx,cy,60+p*520,C.cyan,3,(1-p)*.5)}}
  const lemnCols=[[C.cyan,1.0,0],[C.white,.86,.12],[C.violet,.72,.24]];
